@@ -948,7 +948,8 @@ const BudgetDashboard = () => {
       } else {
         // Create new budget period
         console.log('Creating new budget period...');
-                const { data: newPeriod, error: createError } = await supabase
+                console.log("DEPRECATED: Supabase call removed. Using local storage instead.");
+        const { data: newPeriod, error: createError } = await { data: null, error: null }
           .from('budget_periods')
           .insert({
             user_id: user.id,
@@ -4291,7 +4292,7 @@ const BudgetDashboard = () => {
                         Total Spent
                       </p>
                       <p className="text-2xl font-bold text-destructive">
-                        ��{totalSpent.toLocaleString()}
+                        ₹{totalSpent.toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
                                                 Need + Want + Savings + Investments + Unplanned
