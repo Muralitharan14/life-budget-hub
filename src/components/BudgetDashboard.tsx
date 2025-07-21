@@ -981,13 +981,7 @@ const BudgetDashboard = () => {
         console.log('Clearing existing portfolios for:', { profileName, month: selectedMonth + 1, year: selectedYear });
 
         try {
-          const { error: deleteError } = await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
-            .from('investment_portfolios')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('profile_name', profileName)
-            .eq('budget_month', selectedMonth + 1)
-            .eq('budget_year', selectedYear);
+          const { error: deleteError } = await Promise.resolve({ error: null }); // TEMP: Replace supabase calls
 
           if (deleteError) {
             console.warn('Error clearing existing portfolios:', deleteError);
