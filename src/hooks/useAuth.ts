@@ -80,6 +80,11 @@ export function useAuth() {
     try {
       const { error } = await localAuth.signOut()
       if (error) throw error
+
+      // Update state immediately
+      setUser(null)
+      setSession(null)
+
       return { error: null }
     } catch (error: any) {
       return { error }
