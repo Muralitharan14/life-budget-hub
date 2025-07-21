@@ -83,7 +83,8 @@ export const profileService = {
   // Create user record after Supabase auth signup
   createUser: async (authUser: any, loginId: string) => {
     if (!hasValidCredentials) return null
-    
+
+    // Try to insert with the authenticated user's context
     const { data, error } = await supabase
       .from('users')
       .insert({
@@ -96,7 +97,12 @@ export const profileService = {
       .single()
     
     if (error) {
-      console.error('Error creating user:', error)
+      console.error('Error creating user:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
       return null
     }
     
@@ -140,7 +146,12 @@ export const profileService = {
       .single()
     
     if (error) {
-      console.error('Error creating profile:', error)
+      console.error('Error creating profile:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
       return null
     }
     
