@@ -77,3 +77,95 @@ export const auth = {
     return supabase.auth.onAuthStateChange(callback)
   }
 }
+
+// Profile management functions
+export const profileService = {
+  // Create user record after Supabase auth signup
+  createUser: async (authUser: any, loginId: string) => {
+    if (!hasValidCredentials) return null
+    
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        id: authUser.id,
+        email: authUser.email,
+        login_id: loginId,
+        full_name: authUser.user_metadata?.full_name || ''
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Error creating user:', error)
+      return null
+    }
+    
+    return data
+  },
+
+  // Get or create user by auth ID
+  getOrCreateUser: async (authUser: any, loginId?: string) => {
+    if (!hasValidCredentials) return null
+    
+    // First try to get existing user
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', authUser.id)
+      .single()
+    
+    if (existingUser) return existingUser
+    
+    // If user doesn't exist, create them
+    if (loginId) {
+      return await profileService.createUser(authUser, loginId)
+    }
+    
+    return null
+  },
+
+  // Create a new profile for a user
+  createProfile: async (userId: string, profileName: string, displayName?: string, isPrimary: boolean = false) => {
+    if (!hasValidCredentials) return null
+    
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .insert({
+        user_id: userId,
+        profile_name: profileName,
+        display_name: displayName || profileName,
+        is_primary: isPrimary
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Error creating profile:', error)
+      return null
+    }
+    
+    return data
+  },
+
+  // Get all profiles for a user
+  getUserProfiles: async (userId: string) => {
+    if (!hasValidCredentials) return []
+    
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('is_primary', { ascending: false })
+      .order('created_at', { ascending: true })
+    
+    if (error) {
+      console.error('Error fetching profiles:', error)
+      return []
+    }
+    
+    return data || []
+  }
+}
+
+export { hasValidCredentials }

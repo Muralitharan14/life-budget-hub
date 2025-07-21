@@ -1,25 +1,42 @@
 import { useState, useEffect } from 'react'
 import { User, Session } from '@supabase/supabase-js'
-import { supabase, auth } from '@/lib/supabase'
+import { supabase, auth, profileService } from '@/lib/supabase'
+
+interface UserProfile {
+  id: string
+  user_id: string
+  profile_name: string
+  display_name: string | null
+  is_primary: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+interface ExtendedUser extends User {
+  login_id?: string
+  profiles?: UserProfile[]
+}
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<ExtendedUser | null>(null)
   const [session, setSession] = useState<Session | null>(null)
+  const [profiles, setProfiles] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession()
-            if (error) {
+      if (error) {
         console.error('Error getting session:', {
           message: error.message,
-          status: error.status,
-          statusText: error.statusText
         })
       } else {
         setSession(session)
-        setUser(session?.user ?? null)
+        if (session?.user) {
+          await loadUserWithProfiles(session.user)
+        }
       }
       setLoading(false)
     }
@@ -30,51 +47,59 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-
-        // Create profile on sign up
-        if (event === 'SIGNED_UP' && session?.user) {
-          await createUserProfile(session.user)
+        if (session?.user) {
+          await loadUserWithProfiles(session.user)
+        } else {
+          setUser(null)
+          setProfiles([])
         }
+        setLoading(false)
       }
     )
 
     return () => subscription.unsubscribe()
   }, [])
 
-  const createUserProfile = async (user: User) => {
+  const loadUserWithProfiles = async (authUser: User) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .insert({
-          id: user.id,
-          email: user.email!,
-          full_name: user.user_metadata?.full_name || null,
-          avatar_url: user.user_metadata?.avatar_url || null,
-        })
-
-            if (error && error.code !== '23505') { // Ignore duplicate key error
-        console.error('Error creating profile:', {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint
-        })
+      // Get or create user record
+      const userData = await profileService.getOrCreateUser(authUser)
+      if (userData) {
+        // Get user profiles
+        const userProfiles = await profileService.getUserProfiles(userData.id)
+        setProfiles(userProfiles)
+        
+        // Extend user object with additional data
+        const extendedUser: ExtendedUser = {
+          ...authUser,
+          login_id: userData.login_id,
+          profiles: userProfiles
+        }
+        setUser(extendedUser)
+      } else {
+        setUser(authUser as ExtendedUser)
       }
     } catch (error) {
-      console.error('Error creating profile:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        error: error
-      })
+      console.error('Error loading user profiles:', error)
+      setUser(authUser as ExtendedUser)
     }
   }
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = async (email: string, password: string, fullName?: string, loginId?: string) => {
     setLoading(true)
     try {
       const { data, error } = await auth.signUp(email, password)
       if (error) throw error
+      
+      // If signup successful and we have user data, create user record
+      if (data?.user && loginId) {
+        const userData = await profileService.createUser(data.user, loginId)
+        if (userData) {
+          // Create default profiles (user's own profile)
+          await profileService.createProfile(userData.id, 'Primary', fullName || 'Primary Profile', true)
+        }
+      }
+      
       return { data, error: null }
     } catch (error: any) {
       return { data: null, error }
@@ -101,6 +126,8 @@ export function useAuth() {
     try {
       const { error } = await auth.signOut()
       if (error) throw error
+      setUser(null)
+      setProfiles([])
       return { error: null }
     } catch (error: any) {
       return { error }
@@ -109,13 +136,49 @@ export function useAuth() {
     }
   }
 
+  const createProfile = async (profileName: string, displayName?: string) => {
+    if (!user) return null
+    
+    try {
+      const newProfile = await profileService.createProfile(
+        user.id, 
+        profileName, 
+        displayName, 
+        false
+      )
+      
+      if (newProfile) {
+        setProfiles(prev => [...prev, newProfile])
+        return newProfile
+      }
+      return null
+    } catch (error) {
+      console.error('Error creating profile:', error)
+      return null
+    }
+  }
+
+  const refreshProfiles = async () => {
+    if (!user) return
+    
+    try {
+      const userProfiles = await profileService.getUserProfiles(user.id)
+      setProfiles(userProfiles)
+    } catch (error) {
+      console.error('Error refreshing profiles:', error)
+    }
+  }
+
   return {
     user,
     session,
+    profiles,
     loading,
     signUp,
     signIn,
     signOut,
+    createProfile,
+    refreshProfiles,
     isAuthenticated: !!user,
   }
 }

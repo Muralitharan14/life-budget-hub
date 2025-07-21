@@ -14,6 +14,7 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  const [loginId, setLoginId] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -38,7 +39,7 @@ export function LoginForm() {
     setError('')
     setSuccess('')
 
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword || !loginId) {
       setError('Please fill in all fields')
       return
     }
@@ -53,11 +54,11 @@ export function LoginForm() {
       return
     }
 
-    const { error } = await signUp(email, password, fullName)
+    const { error } = await signUp(email, password, fullName, loginId)
     if (error) {
       setError(error.message)
     } else {
-      setSuccess('Account created successfully! Please check your email to verify your account.')
+      setSuccess('Account created and signed in successfully!')
     }
   }
 
@@ -161,6 +162,17 @@ export function LoginForm() {
 
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-loginid">Login ID *</Label>
+                  <Input
+                    id="signup-loginid"
+                    type="text"
+                    value={loginId}
+                    onChange={(e) => setLoginId(e.target.value)}
+                    placeholder="e.g., tharanmurali901"
+                    required
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Full Name (Optional)</Label>
                   <Input
