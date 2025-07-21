@@ -14,6 +14,7 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  const [loginId, setLoginId] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
