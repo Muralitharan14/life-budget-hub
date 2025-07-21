@@ -163,6 +163,17 @@ export function LoginForm() {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="signup-loginid">Login ID *</Label>
+                  <Input
+                    id="signup-loginid"
+                    type="text"
+                    value={loginId}
+                    onChange={(e) => setLoginId(e.target.value)}
+                    placeholder="e.g., tharanmurali901"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="signup-name">Full Name (Optional)</Label>
                   <Input
                     id="signup-name"
