@@ -83,7 +83,8 @@ export const profileService = {
   // Create user record after Supabase auth signup
   createUser: async (authUser: any, loginId: string) => {
     if (!hasValidCredentials) return null
-    
+
+    // Try to insert with the authenticated user's context
     const { data, error } = await supabase
       .from('users')
       .insert({
@@ -96,7 +97,12 @@ export const profileService = {
       .single()
     
     if (error) {
-      console.error('Error creating user:', error)
+      console.error('Error creating user:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
       return null
     }
     
@@ -106,22 +112,33 @@ export const profileService = {
   // Get or create user by auth ID
   getOrCreateUser: async (authUser: any, loginId?: string) => {
     if (!hasValidCredentials) return null
-    
+
     // First try to get existing user
     const { data: existingUser, error: fetchError } = await supabase
       .from('users')
       .select('*')
       .eq('id', authUser.id)
       .single()
-    
+
     if (existingUser) return existingUser
-    
-    // If user doesn't exist, create them
+
+    // If user doesn't exist, try to create them
     if (loginId) {
-      return await profileService.createUser(authUser, loginId)
+      const userData = await profileService.createUser(authUser, loginId)
+      if (userData) return userData
     }
-    
-    return null
+
+    // If creation failed (possibly due to RLS), return a minimal user object
+    // so the app can still function with auth-only features
+    console.warn('Could not create user record in database, using auth-only mode')
+    return {
+      id: authUser.id,
+      email: authUser.email,
+      login_id: loginId || 'unknown',
+      full_name: authUser.user_metadata?.full_name || '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
   },
 
   // Create a new profile for a user
@@ -140,7 +157,12 @@ export const profileService = {
       .single()
     
     if (error) {
-      console.error('Error creating profile:', error)
+      console.error('Error creating profile:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
       return null
     }
     
