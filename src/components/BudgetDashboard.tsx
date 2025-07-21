@@ -252,16 +252,6 @@ const BudgetDashboard = () => {
   const [isConfigAuthenticated, setIsConfigAuthenticated] = useState(false);
   const { toast } = useToast();
 
-  // TEMPORARY FIX: Mock supabase object to prevent "supabase is not defined" errors
-  const supabase = {
-    from: () => ({
-      select: () => ({ eq: () => ({ eq: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: null }) }) }) }) }),
-      insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: { id: 'mock-id' }, error: null }) }) }),
-      upsert: () => ({ select: () => ({ single: () => Promise.resolve({ data: { id: 'mock-id' }, error: null }) }) }),
-      delete: () => ({ eq: () => ({ eq: () => ({ eq: () => ({ eq: () => Promise.resolve({ error: null }) }) }) }) }),
-    })
-  };
-
   // Supabase data integration
   const { user } = useAuth();
     const {
@@ -919,7 +909,6 @@ const BudgetDashboard = () => {
   };
 
     const handleInvestmentPlanUpdate = async (plan: InvestmentPlan) => {
-    // FIXED: Simplified version using local storage hooks
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -939,84 +928,7 @@ const BudgetDashboard = () => {
         budget_year: selectedYear
       });
 
-      // TEMPORARY FIX: Replace Supabase with local storage approach
-      console.log('Saving investment plan with local storage...');
-
-      // Clear existing portfolios for this period
-      await deleteAllInvestmentPortfolios();
-
-      // Save each portfolio
-      for (const portfolio of plan.portfolios) {
-        await saveInvestmentPortfolio({
-          name: portfolio.name,
-          allocation_type: portfolio.allocationType,
-          allocation_value: portfolio.allocationValue,
-          allocated_amount: portfolio.allocatedAmount,
-          invested_amount: portfolio.investedAmount || 0,
-          allow_direct_investment: portfolio.allowDirectInvestment,
-          is_active: true,
-        });
-      }
-
-      // Refresh data to show the saved portfolios
-      await refetch();
-
-      toast({
-        title: "Investment Plan Saved",
-        description: `Successfully saved ${plan.portfolios.length} portfolios.`,
-      });
-
-      return; // Exit early, skip old Supabase code
-
-      // OLD CODE BELOW - DISABLED
-      const DISABLED_OLD_CODE = () => {
-      try {
-        console.log('Saving investment plan with local storage...');
-
-        // Clear existing portfolios for this period
-        await deleteAllInvestmentPortfolios();
-
-        // Save each portfolio
-        for (const portfolio of plan.portfolios) {
-          await saveInvestmentPortfolio({
-            name: portfolio.name,
-            allocation_type: portfolio.allocationType,
-            allocation_value: portfolio.allocationValue,
-            allocated_amount: portfolio.allocatedAmount,
-            invested_amount: portfolio.investedAmount || 0,
-            allow_direct_investment: portfolio.allowDirectInvestment,
-            is_active: true,
-          });
-        }
-
-        // Refresh data to show the saved portfolios
-        await refetch();
-
-        toast({
-          title: "Investment Plan Saved",
-          description: `Successfully saved ${plan.portfolios.length} portfolios.`,
-        });
-
-        return;
-      } catch (error) {
-        console.error("Error saving investment plan:", error);
-
-        let errorMessage = "Failed to save investment plan. Please try again.";
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        }
-
-        toast({
-          title: "Save Failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // OLD CODE BELOW - DISABLED
-      const DISABLED_supabase = null;
-      const { data: existingPeriod, error: periodError } = await Promise.resolve({ data: null, error: null }) // supabase
+      const { data: existingPeriod, error: periodError } = await supabase
         .from('budget_periods')
         .select('id')
         .eq('user_id', user.id)
