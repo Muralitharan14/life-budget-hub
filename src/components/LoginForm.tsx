@@ -39,7 +39,7 @@ export function LoginForm() {
     setError('')
     setSuccess('')
 
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword || !loginId) {
       setError('Please fill in all fields')
       return
     }
