@@ -1,2 +1,2 @@
-// Export everything from the local storage version
-export * from './useBudgetDataLocal';
+// Export everything from the Supabase version
+export * from './useBudgetDataSupabase';
