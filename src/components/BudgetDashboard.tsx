@@ -928,8 +928,7 @@ const BudgetDashboard = () => {
         budget_year: selectedYear
       });
 
-      console.log("DEPRECATED: Supabase call removed. Using local storage instead.");
-      const { data: existingPeriod, error: periodError } = await { data: null, error: null }
+      const { data: existingPeriod, error: periodError } = await supabase
         .from('budget_periods')
         .select('id')
         .eq('user_id', user.id)
@@ -948,8 +947,7 @@ const BudgetDashboard = () => {
       } else {
         // Create new budget period
         console.log('Creating new budget period...');
-                console.log("DEPRECATED: Supabase call removed. Using local storage instead.");
-        const { data: newPeriod, error: createError } = await { data: null, error: null }
+                const { data: newPeriod, error: createError } = await supabase
           .from('budget_periods')
           .insert({
             user_id: user.id,
@@ -981,7 +979,13 @@ const BudgetDashboard = () => {
         console.log('Clearing existing portfolios for:', { profileName, month: selectedMonth + 1, year: selectedYear });
 
         try {
-          const { error: deleteError } = await Promise.resolve({ error: null }); // TEMP: Replace supabase calls
+          const { error: deleteError } = await supabase
+            .from('investment_portfolios')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('profile_name', profileName)
+            .eq('budget_month', selectedMonth + 1)
+            .eq('budget_year', selectedYear);
 
           if (deleteError) {
             console.warn('Error clearing existing portfolios:', deleteError);
@@ -995,7 +999,7 @@ const BudgetDashboard = () => {
                 // Fallback: try to save portfolios without budget_period_id
         // Clear existing data first
         try {
-          await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
+          await supabase
             .from('investment_funds')
             .delete()
             .eq('user_id', user.id)
@@ -1003,7 +1007,7 @@ const BudgetDashboard = () => {
             .eq('budget_year', selectedYear)
             .eq('budget_month', selectedMonth + 1);
 
-          await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
+          await supabase
             .from('investment_categories')
             .delete()
             .eq('user_id', user.id)
@@ -1016,7 +1020,7 @@ const BudgetDashboard = () => {
 
         for (const portfolio of plan.portfolios) {
           try {
-            const { data: portfolioData, error: portfolioError } = await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
+            const { data: portfolioData, error: portfolioError } = await supabase
               .from('investment_portfolios')
               .upsert({
                 user_id: user.id,
@@ -1044,7 +1048,7 @@ const BudgetDashboard = () => {
             // Save categories and funds
             if (portfolio.categories && portfolio.categories.length > 0) {
               for (const category of portfolio.categories) {
-                const { data: categoryData, error: categoryError } = await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
+                const { data: categoryData, error: categoryError } = await supabase
                   .from('investment_categories')
                   .insert({
                     portfolio_id: savedPortfolioId,
@@ -1072,7 +1076,7 @@ const BudgetDashboard = () => {
 
                 if (category.funds && category.funds.length > 0) {
                   for (const fund of category.funds) {
-                    const { error: fundError } = await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
+                    const { error: fundError } = await supabase
                       .from('investment_funds')
                       .insert({
                         category_id: savedCategoryId,
@@ -1112,7 +1116,7 @@ const BudgetDashboard = () => {
         console.log('Clearing existing portfolios for:', { profileName, budgetPeriodId, month: selectedMonth + 1, year: selectedYear });
 
         try {
-          const { error: deleteError } = await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
+          const { error: deleteError } = await supabase
             .from('investment_portfolios')
             .delete()
             .eq('user_id', user.id)
@@ -1133,7 +1137,7 @@ const BudgetDashboard = () => {
                                 // Clear existing categories and funds for this period
         console.log('Clearing existing categories and funds...');
         try {
-          await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
+          await supabase
             .from('investment_funds')
             .delete()
             .eq('user_id', user.id)
@@ -1141,7 +1145,7 @@ const BudgetDashboard = () => {
             .eq('budget_year', selectedYear)
             .eq('budget_month', selectedMonth + 1);
 
-          await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
+          await supabase
             .from('investment_categories')
             .delete()
             .eq('user_id', user.id)
@@ -1156,7 +1160,7 @@ const BudgetDashboard = () => {
         for (const portfolio of plan.portfolios) {
           try {
             // Save portfolio
-            const { data: portfolioData, error: portfolioError } = await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
+            const { data: portfolioData, error: portfolioError } = await supabase
               .from('investment_portfolios')
               .upsert({
                 user_id: user.id,
@@ -1185,7 +1189,7 @@ const BudgetDashboard = () => {
             // Save categories for this portfolio
             if (portfolio.categories && portfolio.categories.length > 0) {
               for (const category of portfolio.categories) {
-                const { data: categoryData, error: categoryError } = await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
+                const { data: categoryData, error: categoryError } = await supabase
                   .from('investment_categories')
                   .insert({
                     portfolio_id: savedPortfolioId,
@@ -1215,7 +1219,7 @@ const BudgetDashboard = () => {
                 // Save funds for this category
                 if (category.funds && category.funds.length > 0) {
                   for (const fund of category.funds) {
-                    const { error: fundError } = await Promise.resolve({ data: null, error: null }); // TEMP: Replace supabase
+                    const { error: fundError } = await supabase
                       .from('investment_funds')
                       .insert({
                         category_id: savedCategoryId,
