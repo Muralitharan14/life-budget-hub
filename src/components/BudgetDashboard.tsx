@@ -930,11 +930,36 @@ const BudgetDashboard = () => {
       });
 
       // TEMPORARY FIX: Replace Supabase with local storage approach
-      return await this.handleInvestmentPlanUpdateLocalStorage(plan);
-    }
+      console.log('Saving investment plan with local storage...');
 
-    // New simplified implementation using local storage hooks
-    const handleInvestmentPlanUpdateLocalStorage = async (plan: InvestmentPlan) => {
+      // Clear existing portfolios for this period
+      await deleteAllInvestmentPortfolios();
+
+      // Save each portfolio
+      for (const portfolio of plan.portfolios) {
+        await saveInvestmentPortfolio({
+          name: portfolio.name,
+          allocation_type: portfolio.allocationType,
+          allocation_value: portfolio.allocationValue,
+          allocated_amount: portfolio.allocatedAmount,
+          invested_amount: portfolio.investedAmount || 0,
+          allow_direct_investment: portfolio.allowDirectInvestment,
+          is_active: true,
+        });
+      }
+
+      // Refresh data to show the saved portfolios
+      await refetch();
+
+      toast({
+        title: "Investment Plan Saved",
+        description: `Successfully saved ${plan.portfolios.length} portfolios.`,
+      });
+
+      return; // Exit early, skip old Supabase code
+
+      // OLD CODE BELOW - DISABLED
+      const DISABLED_OLD_CODE = () => {
       try {
         console.log('Saving investment plan with local storage...');
 
