@@ -40,6 +40,13 @@ export function useAuth() {
     try {
       const { data, error } = await localAuth.signUp(email, password, fullName)
       if (error) throw error
+
+      // Update state immediately
+      if (data?.user && data?.session) {
+        setUser(data.user)
+        setSession(data.session)
+      }
+
       return { data, error: null }
     } catch (error: any) {
       return { data: null, error }
@@ -53,6 +60,13 @@ export function useAuth() {
     try {
       const { data, error } = await localAuth.signIn(email, password)
       if (error) throw error
+
+      // Update state immediately
+      if (data?.user && data?.session) {
+        setUser(data.user)
+        setSession(data.session)
+      }
+
       return { data, error: null }
     } catch (error: any) {
       return { data: null, error }
