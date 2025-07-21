@@ -909,6 +909,7 @@ const BudgetDashboard = () => {
   };
 
     const handleInvestmentPlanUpdate = async (plan: InvestmentPlan) => {
+    // FIXED: Simplified version using local storage hooks
     if (!user) {
       toast({
         title: "Authentication Required",
