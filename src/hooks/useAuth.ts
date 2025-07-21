@@ -90,18 +90,34 @@ export function useAuth() {
     try {
       const { data, error } = await auth.signUp(email, password)
       if (error) throw error
-      
+
       // If signup successful and we have user data, create user record
       if (data?.user && loginId) {
         const userData = await profileService.createUser(data.user, loginId)
-        if (userData) {
+        if (!userData) {
+          // If user creation failed due to RLS, still allow login but show warning
+          console.warn('User record creation failed, but authentication succeeded. User can still use the app.')
+        } else {
           // Create default profiles (user's own profile)
-          await profileService.createProfile(userData.id, 'Primary', fullName || 'Primary Profile', true)
+          const profileData = await profileService.createProfile(userData.id, 'Primary', fullName || 'Primary Profile', true)
+          if (!profileData) {
+            console.warn('Profile creation failed, but user record exists.')
+          }
         }
       }
-      
+
       return { data, error: null }
     } catch (error: any) {
+      console.error('SignUp error:', error)
+      // Provide user-friendly error messages for common issues
+      if (error.message?.includes('row-level security')) {
+        return {
+          data: null,
+          error: {
+            message: 'Database configuration issue. Please contact support or try again later.'
+          }
+        }
+      }
       return { data: null, error }
     } finally {
       setLoading(false)
