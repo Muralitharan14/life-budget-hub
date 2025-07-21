@@ -54,7 +54,7 @@ export function LoginForm() {
       return
     }
 
-    const { error } = await signUp(email, password, fullName)
+    const { error } = await signUp(email, password, fullName, loginId)
     if (error) {
       setError(error.message)
     } else {
