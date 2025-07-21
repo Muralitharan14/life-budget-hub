@@ -928,7 +928,8 @@ const BudgetDashboard = () => {
         budget_year: selectedYear
       });
 
-      const { data: existingPeriod, error: periodError } = await supabase
+      console.log("DEPRECATED: Supabase call removed. Using local storage instead.");
+      const { data: existingPeriod, error: periodError } = await { data: null, error: null }
         .from('budget_periods')
         .select('id')
         .eq('user_id', user.id)
@@ -4290,7 +4291,7 @@ const BudgetDashboard = () => {
                         Total Spent
                       </p>
                       <p className="text-2xl font-bold text-destructive">
-                        ₹{totalSpent.toLocaleString()}
+                        ��{totalSpent.toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
                                                 Need + Want + Savings + Investments + Unplanned
